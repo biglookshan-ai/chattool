@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { MessageSquarePlus, MessageSquare, Film, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquarePlus, MessageSquare, Film, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { supabase } from '../services/supabaseClient';
 
 export default function Sidebar({ collapsed, onToggle }) {
     const { conversations, activeConvId, setActiveConvId, createConversation } = useApp();
 
     const formatTime = (ts) => {
+        if (!ts) return '';
         const d = new Date(ts);
         return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     };
@@ -127,12 +128,38 @@ export default function Sidebar({ collapsed, onToggle }) {
                                     {conv.title}
                                 </div>
                                 <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>
-                                    {conv.messages.length} 条消息 · {formatTime(conv.createdAt)}
+                                    {conv.messages.length} 条消息 · {formatTime(conv.createdAt || conv.created_at)}
                                 </div>
                             </div>
                         )}
                     </div>
                 ))}
+            </div>
+
+            {/* Logout button */}
+            <div style={{ padding: collapsed ? '10px 8px' : '10px 12px', flexShrink: 0, borderTop: '1px solid var(--border)' }}>
+                <button
+                    onClick={() => supabase.auth.signOut()}
+                    style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: collapsed ? 'center' : 'flex-start',
+                        gap: '8px',
+                        padding: collapsed ? '8px' : '8px 12px',
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        transition: 'color 0.15s',
+                        whiteSpace: 'nowrap'
+                    }}
+                    title="退出登录"
+                >
+                    <LogOut size={15} />
+                    {!collapsed && '退出登录'}
+                </button>
             </div>
         </div>
     );

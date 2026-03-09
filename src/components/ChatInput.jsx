@@ -36,7 +36,7 @@ export default function ChatInput({ onSend, disabled }) {
     }, [value, disabled, mode, onSend]);
 
     // Removed Enter to submit per user request, allowing for multiline natural drafting
-    const handleKeyDown = (e) => {
+    const handleKeyDown = () => {
         // Just let Enter do default line break
     };
 

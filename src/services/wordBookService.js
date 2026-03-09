@@ -1,52 +1,62 @@
-// Word Book Service — LocalStorage-based vocabulary storage
+import { supabase } from './supabaseClient';
 
-const STORAGE_KEY = 'filmtool_wordbook';
-
-/**
- * Get all saved words from LocalStorage.
- * @returns {Array<Object>}
- */
-export function getWordBook() {
+export async function getWordBook(userId) {
+    if (!userId) return [];
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch {
+        const { data, error } = await supabase
+            .from('word_book')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('Error fetching wordbook:', err);
         return [];
     }
 }
 
-/**
- * Save a new word/phrase to the word book.
- * @param {Object} entry - { id, english, chinese_explanation, style, savedAt }
- */
-export function saveWord(entry) {
-    const words = getWordBook();
-    const exists = words.some(w => w.english === entry.english);
-    if (exists) return false;
-    const newEntry = {
-        id: Date.now().toString(),
-        ...entry,
-        savedAt: new Date().toISOString()
-    };
-    words.unshift(newEntry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
-    return true;
+export async function saveWord(userId, entry) {
+    if (!userId) return false;
+    try {
+        // Check if exists
+        const { data: existing } = await supabase
+            .from('word_book')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('english', entry.english);
+
+        if (existing && existing.length > 0) return false;
+
+        const { error } = await supabase
+            .from('word_book')
+            .insert({
+                user_id: userId,
+                english: entry.english,
+                chinese_explanation: entry.chinese_explanation,
+                style: entry.style
+            });
+
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        console.error('Error saving word:', err);
+        return false;
+    }
 }
 
-/**
- * Delete a word from the word book by id.
- * @param {string} id
- */
-export function deleteWord(id) {
-    const words = getWordBook().filter(w => w.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
+export async function deleteWord(userId, id) {
+    if (!userId) return;
+    try {
+        await supabase
+            .from('word_book')
+            .delete()
+            .match({ id, user_id: userId });
+    } catch (err) {
+        console.error('Error deleting word:', err);
+    }
 }
 
-/**
- * Check if a phrase is already saved.
- * @param {string} english
- * @returns {boolean}
- */
-export function isSaved(english) {
-    return getWordBook().some(w => w.english === english);
-}
+// NOTE: Since checking status requires a network call now,
+// UI might need to rely on the local state copy of getWordBook
+// rather than doing an active network check every time isSaved is called.

@@ -8,9 +8,11 @@ export default function ApiKeySettings({ open, onClose }) {
     // Load saved key on mount
     useEffect(() => {
         if (open) {
-            const stored = localStorage.getItem('gemini_custom_api_key') || '';
-            setCustomKey(stored);
-            setSavedKey(stored);
+            setTimeout(() => {
+                const stored = localStorage.getItem('gemini_custom_api_key') || '';
+                setCustomKey(stored);
+                setSavedKey(stored);
+            }, 0);
         }
     }, [open]);
 

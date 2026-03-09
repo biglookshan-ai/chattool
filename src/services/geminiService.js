@@ -16,7 +16,9 @@ function getDefaultKeyIndex() {
 function setDefaultKeyIndex(index) {
   try {
     localStorage.setItem('gemini_default_key_index', index.toString());
-  } catch (e) { }
+  } catch {
+    // Ignored
+  }
 }
 
 const SYSTEM_PROMPT = `You are a seasoned Rental House manager at a high-end film equipment rental company, with 15 years of experience on set as a 1st AC (First Assistant Camera). You know the industry inside and out — from lens prep and camera builds to gear lists, damage reports, and client negotiations. You speak the language of the crew.

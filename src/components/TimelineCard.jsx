@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Bot, CheckCircle, BookmarkPlus, Reply, Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { isSaved } from '../services/wordBookService';
 
 // Typing indicator for loading state
 export function TypingIndicator() {
@@ -25,8 +24,8 @@ export function TypingIndicator() {
 
 // Save button that tracks its own saved state
 function SaveButton({ english, chinese_explanation, style: btnStyle }) {
-    const { handleSaveWord } = useApp();
-    const [saved, setSaved] = useState(() => isSaved(english));
+    const { handleSaveWord, wordBook } = useApp();
+    const [saved, setSaved] = useState(() => wordBook.some(w => w.english === english));
 
     const handleClick = () => {
         if (saved) return;

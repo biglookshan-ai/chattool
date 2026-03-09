@@ -19,6 +19,9 @@ export default function Auth({ onLogin }) {
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
+                    options: {
+                        emailRedirectTo: window.location.origin,
+                    }
                 });
                 if (error) throw error;
                 setMessage({ text: '注册成功！请查收验证邮件 (如果有开启邮箱验证)，或直接登录。', type: 'success' });

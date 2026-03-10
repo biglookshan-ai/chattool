@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bot, CheckCircle, BookmarkPlus, Reply, Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bot, CheckCircle, BookmarkPlus, Reply, Send, RefreshCw, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 // Typing indicator for loading state
@@ -37,6 +37,36 @@ function SaveButton({ english, chinese_explanation, style: btnStyle }) {
         <button className={`btn-save ${saved ? 'saved' : ''}`} onClick={handleClick}>
             {saved ? <CheckCircle size={11} /> : <BookmarkPlus size={11} />}
             {saved ? '已收藏' : '➕ 收藏'}
+        </button>
+    );
+}
+
+// Copy button that shows a temporary success state
+function CopyButton({ text }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            className="btn-ghost"
+            style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                padding: '4px 8px', fontSize: '11px', color: copied ? 'var(--success)' : 'var(--text-muted)',
+                borderColor: copied ? 'rgba(74, 222, 128, 0.3)' : 'var(--border)',
+                background: copied ? 'var(--success-dim)' : 'transparent'
+            }}
+            title="一键复制到剪贴板"
+        >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+            {copied ? '已复制' : '复制'}
         </button>
     );
 }
@@ -232,7 +262,10 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                                                                         {reply.chinese_explanation}
                                                                     </p>
                                                                 )}
-                                                                <SaveButton english={reply.english} chinese_explanation={reply.chinese_explanation} style={reply.style} />
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                    <CopyButton text={reply.english} />
+                                                                    <SaveButton english={reply.english} chinese_explanation={reply.chinese_explanation} style={reply.style} />
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -300,11 +333,14 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                                                 {assistantMsg.reply_data.chinese_explanation}
                                             </p>
                                         )}
-                                        <SaveButton
-                                            english={assistantMsg.reply_data.optimized_english}
-                                            chinese_explanation={assistantMsg.reply_data.chinese_explanation}
-                                            style="optimized"
-                                        />
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <CopyButton text={assistantMsg.reply_data.optimized_english} />
+                                            <SaveButton
+                                                english={assistantMsg.reply_data.optimized_english}
+                                                chinese_explanation={assistantMsg.reply_data.chinese_explanation}
+                                                style="optimized"
+                                            />
+                                        </div>
                                     </div>
                                 ) : !assistantMsg.user_reply_text ? (
                                     <div className="animate-fade-in-up" style={{
@@ -395,11 +431,14 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                                         </p>
                                     )}
 
-                                    <SaveButton
-                                        english={assistantMsg.data.optimized_english}
-                                        chinese_explanation={assistantMsg.data.chinese_explanation}
-                                        style="optimized"
-                                    />
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <CopyButton text={assistantMsg.data.optimized_english} />
+                                        <SaveButton
+                                            english={assistantMsg.data.optimized_english}
+                                            chinese_explanation={assistantMsg.data.chinese_explanation}
+                                            style="optimized"
+                                        />
+                                    </div>
                                 </div>
                             </>
                         )}

@@ -208,7 +208,7 @@ export default function App() {
     <div style={{ background: 'var(--bg-primary)', display: 'flex', justifyContent: 'center' }}>
       <div style={{
         display: 'flex',
-        height: '100vh',
+        height: '100dvh', /* Fixes Chrome mobile toolbar hiding the bottom/top */
         width: '100%',
         maxWidth: '1400px',
         overflow: 'hidden',

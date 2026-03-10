@@ -63,20 +63,20 @@ export default function ApiKeySettings({ open, onClose }) {
                 }}
             />
             <div
-                className="glass-card animate-fade-in-up"
+                className="animate-slide-in-right"
                 style={{
-                    position: 'fixed',
-                    top: '5vh',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '420px', maxWidth: '90vw',
-                    zIndex: 101, padding: '24px',
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
-                    maxHeight: '90vh',
-                    display: 'flex', flexDirection: 'column'
+                    position: 'fixed', top: 0, right: 0, bottom: 0,
+                    width: '360px', maxWidth: '100vw',
+                    background: 'var(--bg-secondary)',
+                    borderLeft: '1px solid var(--border)',
+                    zIndex: 101, display: 'flex', flexDirection: 'column',
+                    boxShadow: '-8px 0 40px rgba(0,0,0,0.4)'
                 }}
             >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <div style={{
+                    padding: '20px', borderBottom: '1px solid var(--border)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Key size={18} style={{ color: 'var(--accent)' }} />
                         <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>API Key 设置</h2>
@@ -92,11 +92,11 @@ export default function ApiKeySettings({ open, onClose }) {
                     </button>
                 </div>
 
-                <div style={{ marginBottom: '20px', overflowY: 'auto', paddingRight: '4px' }}>
-                    <p style={{ fontSize: '12px', color: 'var(--warning)', lineHeight: '1.5', marginBottom: '12px', padding: '8px', background: 'rgba(234,179,8,0.1)', borderRadius: '6px', border: '1px solid rgba(234,179,8,0.2)' }}>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--warning)', lineHeight: '1.5', marginBottom: '16px', padding: '10px', background: 'rgba(234,179,8,0.1)', borderRadius: '6px', border: '1px solid rgba(234,179,8,0.2)' }}>
                         ⚠️ 系统不再提供默认 Key。请自行添加你的专属 Gemini API Keys。
-                        <br />
-                        支持配置多个 Key，如果某个 Key 额度耗尽或失效，系统会自动尝试切换下一个。
+                        <br /><br />
+                        如果某个 Key 额度耗尽或失效，系统会自动尝试切换下一个。
                     </p>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -120,7 +120,7 @@ export default function ApiKeySettings({ open, onClose }) {
                                         }}
                                         onChange={(e) => updateKey(index, e.target.value)}
                                         style={{
-                                            flex: 1,
+                                            flex: 1, minWidth: 0,
                                             background: 'var(--bg-primary)',
                                             border: '1px solid var(--border)',
                                             borderRadius: '8px',
@@ -147,36 +147,30 @@ export default function ApiKeySettings({ open, onClose }) {
                     <button
                         onClick={addKey}
                         className="btn-ghost"
-                        style={{ marginTop: '12px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', padding: '8px' }}
+                        style={{ marginTop: '16px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', padding: '10px' }}
                     >
                         <Plus size={14} /> 增加一个 Key 备用
                     </button>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                <div style={{ padding: '20px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button
+                        onClick={handleSave}
+                        className="btn-primary"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', gap: '6px', padding: '12px' }}
+                        disabled={!hasValidKeys}
+                    >
+                        <Save size={14} />
+                        保存设置
+                    </button>
                     <button
                         onClick={handleClearAll}
                         className="btn-ghost"
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f87171', borderColor: 'rgba(248,113,113,0.3)' }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', gap: '6px', color: '#f87171', borderColor: 'rgba(248,113,113,0.3)' }}
                     >
                         <Trash2 size={14} />
                         清空全部
                     </button>
-
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={onClose} className="btn-ghost">
-                            取消
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            className="btn-primary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                            disabled={!hasValidKeys}
-                        >
-                            <Save size={14} />
-                            保存设置
-                        </button>
-                    </div>
                 </div>
             </div>
         </>

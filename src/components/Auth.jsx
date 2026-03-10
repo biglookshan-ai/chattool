@@ -46,12 +46,9 @@ export default function Auth({ onLogin }) {
     return (
         <div style={{
             display: 'flex', justifyContent: 'center', alignItems: 'center',
-            height: '100vh', width: '100vw', background: 'var(--bg-primary)'
+            height: '100dvh', width: '100vw', background: 'var(--bg-primary)'
         }}>
-            <div className="glass-card" style={{
-                padding: '40px', width: '100%', maxWidth: '400px',
-                display: 'flex', flexDirection: 'column', gap: '24px'
-            }}>
+            <div className="glass-card auth-card">
                 <div style={{ textAlign: 'center' }}>
                     <div style={{
                         width: '60px', height: '60px', borderRadius: '16px',

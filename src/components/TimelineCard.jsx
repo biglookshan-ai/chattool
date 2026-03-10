@@ -364,15 +364,6 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                                         <textarea
                                             value={replyText}
                                             onChange={(e) => setReplyText(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && !e.shiftKey) {
-                                                    e.preventDefault();
-                                                    if (replyText.trim()) {
-                                                        onReply(replyText, originalText, assistantMsg.id);
-                                                        setReplyText('');
-                                                    }
-                                                }
-                                            }}
                                             placeholder="用中文写下你的回复..."
                                             style={{
                                                 width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)',

@@ -32,50 +32,66 @@ export function AppProvider({ children, user }) {
         async function fetchInitialData() {
             setIsFetchingInitial(true);
             try {
-                // Fetch Conversations
-                const { data: convos, error } = await supabase
-                    .from('conversations')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .order('updated_at', { ascending: false });
-
-                if (error) throw error;
-
-                if (convos && convos.length > 0) {
-                    // Ensure older convos have a note field locally
-                    setConversations(convos.map(c => ({ ...c, note: c.note || '' })));
-                    setActiveConvId(convos[0].id);
-                } else {
-                    // Create default conversation if none exists
-                    const initial = newConversation('对话 1');
-                    const { error: insertError } = await supabase
+                try {
+                    const { data: convos, error: convosError } = await supabase
                         .from('conversations')
-                        .insert({
-                            id: initial.id,
-                            user_id: user.id,
-                            title: initial.title,
-                            note: initial.note,
-                            messages: initial.messages
-                        });
-                    if (!insertError) {
-                        setConversations([initial]);
-                        setActiveConvId(initial.id);
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .order('updated_at', { ascending: false });
+
+                    if (convosError) throw convosError;
+
+                    if (convos && convos.length > 0) {
+                        setConversations(convos.map(c => ({ ...c, note: c.note || '' })));
+                        setActiveConvId(convos[0].id);
+                    } else {
+                        const initial = newConversation('对话 1');
+                        const { error: insertError } = await supabase
+                            .from('conversations')
+                            .insert({
+                                id: initial.id,
+                                user_id: user.id,
+                                title: initial.title,
+                                note: initial.note,
+                                messages: initial.messages
+                            });
+                        if (!insertError) {
+                            setConversations([initial]);
+                            setActiveConvId(initial.id);
+                        } else {
+                            console.error('Failed to create default conversation:', insertError);
+                        }
                     }
+                } catch (e) {
+                    console.error("Conversations fetch failed:", e);
                 }
 
-                // Fetch API Settings
-                const { data: settingsData, error: settingsError } = await supabase
-                    .from('user_settings')
-                    .select('api_keys')
-                    .eq('user_id', user.id)
-                    .maybeSingle();
+                try {
+                    const { data: settingsData, error: settingsError } = await supabase
+                        .from('user_settings')
+                        .select('api_keys')
+                        .eq('user_id', user.id)
+                        .maybeSingle();
 
-                if (settingsData && settingsData.api_keys) {
-                    setApiKeys(settingsData.api_keys);
-                    localStorage.setItem('gemini_api_keys', JSON.stringify(settingsData.api_keys));
-                } else if (!settingsError || settingsError.code === 'PGRST116') {
-                    // Create if doesn't exist
-                    await supabase.from('user_settings').insert({ user_id: user.id, api_keys: apiKeys });
+                    if (settingsError && settingsError.code !== 'PGRST116') {
+                        console.error("Settings fetch error:", settingsError);
+                    }
+
+                    if (settingsData && Array.isArray(settingsData.api_keys)) {
+                        setApiKeys(settingsData.api_keys);
+                        localStorage.setItem('gemini_api_keys', JSON.stringify(settingsData.api_keys));
+                    } else if (!settingsData) {
+                        // Create user_settings row if missing
+                        const initKeys = [''];
+                        const { error: insertSettingsErr } = await supabase.from('user_settings').insert({ user_id: user.id, api_keys: initKeys });
+                        if (!insertSettingsErr) {
+                            setApiKeys(initKeys);
+                        } else {
+                            console.error("Failed creating user_settings:", insertSettingsErr);
+                        }
+                    }
+                } catch (e) {
+                    console.error("User settings fetch failed:", e);
                 }
 
                 // Fetch Wordbook
@@ -197,7 +213,7 @@ export function AppProvider({ children, user }) {
                 id: newC.id,
                 user_id: user.id,
                 title: newC.title,
-                note: newC.note,
+                note: newC.note || '',
                 messages: newC.messages
             });
 
@@ -205,7 +221,8 @@ export function AppProvider({ children, user }) {
             setConversations(prev => [newC, ...prev]);
             setActiveConvId(newC.id);
         } else {
-            console.error("Error creating conversation:", error.message);
+            console.error("Error creating conversation:", error);
+            alert("Error creating conversation. Please check console.");
         }
     }, [conversations.length, user]);
 

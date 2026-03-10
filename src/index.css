@@ -23,13 +23,37 @@
   --info-dim: rgba(56, 189, 248, 0.12);
 }
 
+:root[data-theme='light'] {
+  --bg-primary: #f4f4f5;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f3f4f6;
+  --border: #e5e7eb;
+  --border-light: #f3f4f6;
+  --accent: #6b5ce7;
+  --accent-hover: #5a4bdf;
+  --accent-dim: rgba(107, 92, 231, 0.1);
+  --accent-glow: rgba(107, 92, 231, 0.2);
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --success: #10b981;
+  --success-dim: rgba(16, 185, 129, 0.12);
+  --warning: #f59e0b;
+  --warning-dim: rgba(245, 158, 11, 0.12);
+  --info: #0ea5e9;
+  --info-dim: rgba(14, 165, 233, 0.12);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   overflow: hidden;
   font-family: 'Inter', system-ui, sans-serif;
@@ -38,48 +62,114 @@ html, body, #root {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
+}
 
 /* Animations */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes pulse-dot {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-  40% { transform: scale(1); opacity: 1; }
-}
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.animate-fade-in-up { animation: fadeInUp 0.35s ease forwards; }
-.animate-fade-in    { animation: fadeIn 0.25s ease forwards; }
-.animate-slide-in-right { animation: slideInRight 0.3s ease forwards; }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-dot {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.35s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease forwards;
+}
 
 /* Typing dots */
 .typing-dot {
   display: inline-block;
-  width: 6px; height: 6px;
+  width: 6px;
+  height: 6px;
   background: var(--accent);
   border-radius: 50%;
   margin: 0 2px;
   animation: pulse-dot 1.4s ease-in-out infinite;
 }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 /* Glass card */
 .glass-card {
@@ -89,7 +179,9 @@ html, body, #root {
 }
 
 /* Glow effects */
-.glow-accent { box-shadow: 0 0 0 1px var(--accent-glow), 0 4px 24px var(--accent-dim); }
+.glow-accent {
+  box-shadow: 0 0 0 1px var(--accent-glow), 0 4px 24px var(--accent-dim);
+}
 
 /* Tag badge */
 .tag {
@@ -103,21 +195,25 @@ html, body, #root {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
 .tag-casual {
   background: var(--success-dim);
   color: var(--success);
   border: 1px solid rgba(74, 222, 128, 0.2);
 }
+
 .tag-professional {
   background: var(--info-dim);
   color: var(--info);
   border: 1px solid rgba(56, 189, 248, 0.2);
 }
+
 .tag-translation {
   background: var(--accent-dim);
   color: var(--accent);
   border: 1px solid var(--accent-glow);
 }
+
 .tag-optimized {
   background: var(--warning-dim);
   color: var(--warning);
@@ -137,8 +233,15 @@ html, body, #root {
   transition: all 0.2s;
   outline: none;
 }
-.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
-.btn-primary:active { transform: translateY(0); }
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
 
 .btn-ghost {
   background: transparent;
@@ -152,6 +255,7 @@ html, body, #root {
   transition: all 0.2s;
   outline: none;
 }
+
 .btn-ghost:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
@@ -173,11 +277,13 @@ html, body, #root {
   transition: all 0.2s;
   outline: none;
 }
+
 .btn-save:hover {
   background: var(--accent);
   color: white;
   border-color: var(--accent);
 }
+
 .btn-save.saved {
   background: var(--success-dim);
   color: var(--success);
@@ -193,10 +299,12 @@ html, body, #root {
   transition: all 0.15s;
   border: 1px solid transparent;
 }
+
 .conv-item:hover {
   background: var(--bg-hover);
   border-color: var(--border);
 }
+
 .conv-item.active {
   background: var(--accent-dim);
   border-color: rgba(124, 106, 247, 0.3);
@@ -209,7 +317,8 @@ html, body, #root {
   border-radius: 12px;
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
+  /* 16px prevents iOS Safari auto zoom */
   line-height: 1.6;
   resize: none;
   width: 100%;
@@ -217,14 +326,20 @@ html, body, #root {
   padding: 14px 16px;
   transition: border-color 0.2s;
 }
+
 .chat-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
-.chat-input::placeholder { color: var(--text-muted); }
+
+.chat-input::placeholder {
+  color: var(--text-muted);
+}
 
 /* Mono font for English text snippets */
-.mono { font-family: 'JetBrains Mono', monospace; }
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
 
 /* Separator */
 .sep {

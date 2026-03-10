@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { MessageSquarePlus, MessageSquare, Film, ChevronLeft, ChevronRight, LogOut, Edit2, Trash2, X, Save } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MessageSquarePlus, MessageSquare, Film, ChevronLeft, ChevronRight, LogOut, Edit2, Trash2, X, Save, Sun, Moon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
 
@@ -9,6 +9,16 @@ export default function Sidebar({ collapsed, onToggle }) {
     const [editConv, setEditConv] = useState(null);
     const [editTitle, setEditTitle] = useState('');
     const [editNote, setEditNote] = useState('');
+
+    // Theme state
+    const [theme, setTheme] = useState(() => localStorage.getItem('app-theme') || 'dark');
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('app-theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
     const formatTime = (ts) => {
         if (!ts) return '';
@@ -205,9 +215,31 @@ export default function Sidebar({ collapsed, onToggle }) {
                         </div>
                     ))}
                 </div>
+                {/* Bottom Actions (Theme + Logout) */}
+                <div style={{ padding: collapsed ? '10px 8px' : '10px 12px', flexShrink: 0, borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <button
+                        onClick={toggleTheme}
+                        style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: collapsed ? 'center' : 'flex-start',
+                            gap: '8px',
+                            padding: collapsed ? '8px' : '8px 12px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-secondary)',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            transition: 'color 0.15s',
+                            whiteSpace: 'nowrap'
+                        }}
+                        title={theme === 'dark' ? "切换为浅色模式" : "切换为深色模式"}
+                    >
+                        {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+                        {!collapsed && (theme === 'dark' ? '浅色模式' : '深色模式')}
+                    </button>
 
-                {/* Logout button */}
-                <div style={{ padding: collapsed ? '10px 8px' : '10px 12px', flexShrink: 0, borderTop: '1px solid var(--border)' }}>
                     <button
                         onClick={() => supabase.auth.signOut()}
                         style={{

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Send, Loader2, Lightbulb } from 'lucide-react';
 
 const HINTS = [
@@ -15,6 +15,13 @@ export default function ChatInput({ onSend, disabled }) {
     const [mode, setMode] = useState('ask'); // 'ask' or 'reply'
     const textareaRef = useRef(null);
     const [hintIndex, setHintIndex] = useState(() => Math.floor(Math.random() * HINTS.length));
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleSubmit = useCallback(() => {
         const trimmed = value.trim();
@@ -63,7 +70,7 @@ export default function ChatInput({ onSend, disabled }) {
 
     return (
         <div style={{
-            padding: '16px 20px 20px',
+            padding: isMobile ? '12px 12px calc(12px + env(safe-area-inset-bottom, 0px))' : '16px 20px 20px',
             borderTop: '1px solid var(--border)',
             background: 'var(--bg-secondary)',
             flexShrink: 0

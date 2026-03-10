@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { BookOpen, Film, Zap, Key } from 'lucide-react';
+import { BookOpen, Film, Zap, Key, Menu } from 'lucide-react';
 import { useApp } from './context/AppContext';
 import { translateWithGemini } from './services/geminiService';
 import Sidebar from './components/Sidebar';
@@ -88,9 +88,21 @@ export default function App() {
     activeConversation, activeConvId, addMessage, updateLastMessage, updateMessage,
     wordBookOpen, setWordBookOpen, isLoading, setIsLoading
   } = useApp();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth <= 768);
   const [keySettingsOpen, setKeySettingsOpen] = useState(false);
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (mobile && !isMobile) setSidebarCollapsed(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -204,33 +216,64 @@ export default function App() {
         background: 'var(--bg-secondary)',
         boxShadow: '0 0 40px rgba(0,0,0,0.5)'
       }}>
-        {/* Left sidebar */}
-        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(p => !p)} />
+        {/* Mobile Backdrop for Sidebar */}
+        {isMobile && !sidebarCollapsed && (
+          <div
+            onClick={() => setSidebarCollapsed(true)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 90,
+              background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)',
+              animation: 'fadeIn 0.2s ease'
+            }}
+          />
+        )}
+
+        {/* Left sidebar container */}
+        <div style={{
+          position: isMobile ? 'fixed' : 'relative',
+          top: 0, bottom: 0, left: 0, zIndex: 100, height: '100%',
+          transform: isMobile && sidebarCollapsed ? 'translateX(-100%)' : 'translateX(0)',
+          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          display: 'flex'
+        }}>
+          <Sidebar collapsed={isMobile ? false : sidebarCollapsed} onToggle={() => setSidebarCollapsed(p => !p)} />
+        </div>
 
         {/* Main chat area */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
 
           {/* Top bar */}
           <div style={{
-            height: '52px', flexShrink: 0,
+            height: '56px', flexShrink: 0,
             borderBottom: '1px solid var(--border)',
             background: 'var(--bg-secondary)',
             display: 'flex', alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 20px'
+            padding: isMobile ? '0 12px' : '0 20px'
           }}>
             {/* Conversation title */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarCollapsed(false)}
+                  style={{
+                    background: 'transparent', border: 'none', color: 'var(--text-primary)',
+                    display: 'flex', alignItems: 'center', padding: '4px', cursor: 'pointer'
+                  }}
+                >
+                  <Menu size={20} />
+                </button>
+              )}
               <div style={{
                 width: '8px', height: '8px', borderRadius: '50%',
                 background: isLoading ? 'var(--warning)' : 'var(--success)',
                 boxShadow: `0 0 6px ${isLoading ? 'var(--warning)' : 'var(--success)'}`,
                 transition: 'background 0.3s'
               }} />
-              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', maxWidth: isMobile ? '120px' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {activeConversation?.title || '新对话'}
               </span>
-              {isLoading && (
+              {isLoading && !isMobile && (
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                   AI 正在思考…
                 </span>
@@ -245,7 +288,7 @@ export default function App() {
                   display: 'flex', alignItems: 'center', gap: '6px',
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border)',
-                  borderRadius: '8px', padding: '6px 12px',
+                  borderRadius: '8px', padding: isMobile ? '6px' : '6px 12px',
                   color: 'var(--text-secondary)',
                   fontSize: '12px', fontWeight: 600,
                   cursor: 'pointer', transition: 'all 0.2s', outline: 'none'
@@ -253,7 +296,7 @@ export default function App() {
                 title="设置专属 API Key"
               >
                 <Key size={14} />
-                <span className="hide-on-mobile">API Key</span>
+                {!isMobile && <span>API Key</span>}
               </button>
               <button
                 onClick={() => setWordBookOpen(true)}
@@ -261,14 +304,14 @@ export default function App() {
                   display: 'flex', alignItems: 'center', gap: '6px',
                   background: wordBookOpen ? 'var(--accent)' : 'var(--bg-card)',
                   border: `1px solid ${wordBookOpen ? 'var(--accent)' : 'var(--border)'}`,
-                  borderRadius: '8px', padding: '6px 12px',
+                  borderRadius: '8px', padding: isMobile ? '6px' : '6px 12px',
                   color: wordBookOpen ? 'white' : 'var(--text-secondary)',
                   fontSize: '12px', fontWeight: 600,
                   cursor: 'pointer', transition: 'all 0.2s', outline: 'none'
                 }}
               >
                 <BookOpen size={14} />
-                单词本
+                {!isMobile && <span>单词本</span>}
               </button>
             </div>
           </div>

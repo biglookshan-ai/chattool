@@ -34,9 +34,19 @@ function SaveButton({ english, chinese_explanation, style: btnStyle }) {
     };
 
     return (
-        <button className={`btn-save ${saved ? 'saved' : ''}`} onClick={handleClick}>
-            {saved ? <CheckCircle size={11} /> : <BookmarkPlus size={11} />}
-            {saved ? '已收藏' : '➕ 收藏'}
+        <button
+            onClick={handleClick}
+            className="btn-ghost"
+            style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                padding: '4px 8px', fontSize: '11px', color: saved ? 'var(--warning)' : 'var(--text-muted)',
+                borderColor: saved ? 'rgba(234, 179, 8, 0.3)' : 'var(--border)',
+                background: saved ? 'rgba(234, 179, 8, 0.1)' : 'transparent'
+            }}
+            title={saved ? "已收藏" : "收藏至单词本"}
+        >
+            {saved ? <Check size={12} /> : <BookmarkPlus size={12} />}
+            {saved ? '已收藏' : '收藏'}
         </button>
     );
 }

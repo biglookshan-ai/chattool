@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { MessageSquarePlus, MessageSquare, Film, ChevronLeft, ChevronRight, LogOut, Edit2, Trash2, X, Save, Sun, Moon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
@@ -266,7 +267,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             </div>
 
             {/* Edit Metadata Modal */}
-            {editModalOpen && (
+            {editModalOpen && createPortal(
                 <>
                     <div
                         onClick={() => setEditModalOpen(false)}
@@ -342,7 +343,8 @@ export default function Sidebar({ collapsed, onToggle }) {
                             </button>
                         </div>
                     </div>
-                </>
+                </>,
+                document.body
             )}
         </>
     );

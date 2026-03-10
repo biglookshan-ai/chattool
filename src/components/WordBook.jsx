@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, X, Trash2, Search, Volume2 } from 'lucide-react';
+import { BookOpen, X, Trash2, Search, Volume2, Bot } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { translateWithGemini } from '../services/geminiService';
 
 export default function WordBook() {
-    const { wordBook, wordBookOpen, setWordBookOpen, handleDeleteWord } = useApp();
+    const { wordBook, wordBookOpen, setWordBookOpen, handleDeleteWord, handleUpdateWord } = useApp();
     const [search, setSearch] = useState('');
+    const [translatingId, setTranslatingId] = useState(null);
 
     // Close on Escape
     useEffect(() => {
@@ -12,6 +14,25 @@ export default function WordBook() {
         if (wordBookOpen) window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
     }, [wordBookOpen, setWordBookOpen]);
+
+    const handleTranslate = async (word) => {
+        setTranslatingId(word.id);
+        try {
+            const prompt = `请用非常简短的一句话解释这个影视专业词汇/句子的意思: "${word.english}"`;
+            const result = await translateWithGemini(prompt);
+            let explanation = result.translation || result.chinese_explanation || Object.values(result)[0] || '翻译成功';
+            handleUpdateWord(word.id, { chinese_explanation: explanation });
+        } catch (err) {
+            console.error(err);
+        }
+        setTranslatingId(null);
+    };
+
+    const handleTTS = (text) => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
+    };
 
     const filtered = wordBook.filter(w =>
         w.english.toLowerCase().includes(search.toLowerCase()) ||
@@ -151,13 +172,14 @@ export default function WordBook() {
                                                 {s.label}
                                             </span>
                                             {/* English */}
-                                            <p className="mono" style={{
-                                                fontSize: '13px', fontWeight: 600,
+                                            <p style={{
+                                                fontSize: '15px', fontWeight: 600,
                                                 color: 'var(--text-primary)',
                                                 lineHeight: 1.5, marginBottom: '6px',
-                                                wordBreak: 'break-word'
+                                                wordBreak: 'break-word',
+                                                fontFamily: 'inherit'
                                             }}>
-                                                "{word.english}"
+                                                {word.english}
                                             </p>
                                             {/* Explanation */}
                                             {word.chinese_explanation && (
@@ -170,19 +192,46 @@ export default function WordBook() {
                                                 {new Date(word.savedAt).toLocaleDateString('zh-CN')}
                                             </p>
                                         </div>
-                                        {/* Delete button */}
-                                        <button
-                                            onClick={() => handleDeleteWord(word.id)}
-                                            style={{
-                                                background: 'transparent', border: 'none', cursor: 'pointer',
-                                                color: 'var(--text-muted)', padding: '2px',
-                                                borderRadius: '4px', transition: 'color 0.15s',
-                                                flexShrink: 0
-                                            }}
-                                            title="删除"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0, paddingLeft: '8px', borderLeft: '1px solid var(--border)' }}>
+                                            {/* TTS button */}
+                                            <button
+                                                onClick={() => handleTTS(word.english)}
+                                                style={{
+                                                    background: 'transparent', border: 'none', cursor: 'pointer',
+                                                    color: 'var(--accent)', padding: '4px',
+                                                    borderRadius: '4px', transition: 'all 0.15s',
+                                                }}
+                                                title="朗读"
+                                            >
+                                                <Volume2 size={16} />
+                                            </button>
+                                            {/* Translate button */}
+                                            <button
+                                                onClick={() => handleTranslate(word)}
+                                                disabled={translatingId === word.id}
+                                                style={{
+                                                    background: 'transparent', border: 'none', cursor: translatingId === word.id ? 'not-allowed' : 'pointer',
+                                                    color: 'var(--info)', padding: '4px',
+                                                    borderRadius: '4px', transition: 'all 0.15s',
+                                                }}
+                                                title="AI 翻译"
+                                            >
+                                                {translatingId === word.id ? <span className="typing-dot" style={{ display: 'inline-block' }} /> : <Bot size={16} />}
+                                            </button>
+                                            {/* Delete button */}
+                                            <button
+                                                onClick={() => handleDeleteWord(word.id)}
+                                                style={{
+                                                    background: 'transparent', border: 'none', cursor: 'pointer',
+                                                    color: 'var(--text-muted)', padding: '4px',
+                                                    borderRadius: '4px', transition: 'color 0.15s',
+                                                    marginTop: 'auto'
+                                                }}
+                                                title="删除"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             );

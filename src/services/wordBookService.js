@@ -57,6 +57,21 @@ export async function deleteWord(userId, id) {
     }
 }
 
+export async function updateWord(userId, id, updates) {
+    if (!userId) return;
+    try {
+        const { error } = await supabase
+            .from('word_book')
+            .update(updates)
+            .match({ id, user_id: userId });
+        if (error) throw error;
+        return true;
+    } catch (err) {
+        console.error('Error updating word:', err);
+        return false;
+    }
+}
+
 // NOTE: Since checking status requires a network call now,
 // UI might need to rely on the local state copy of getWordBook
 // rather than doing an active network check every time isSaved is called.

@@ -1,34 +1,36 @@
 import { useState, useEffect } from 'react';
-import { Key, Save, Trash2, X, Plus, Minus } from 'lucide-react';
-import { getSavedKeys, saveKeys } from '../services/geminiService';
+import { Key, X, Plus, Trash2, CheckCircle, HelpCircle, Minus, Save } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 export default function ApiKeySettings({ open, onClose }) {
-    const [keys, setKeys] = useState(['']);
+    const { apiKeys, saveApiKeys } = useApp();
+    const [keys, setKeys] = useState(() => [...apiKeys]);
 
-    // Load saved keys on mount
+    // Re-sync local state from global AppContext when modal opens
     useEffect(() => {
         if (open) {
-            setTimeout(() => {
-                const stored = getSavedKeys();
-                setKeys(stored.length > 0 ? stored : ['']);
-            }, 0);
+            setKeys(apiKeys.length > 0 ? [...apiKeys] : ['']);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     if (!open) return null;
 
     const handleSave = () => {
-        const validKeys = keys.map(k => k.trim()).filter(Boolean);
-        saveKeys(validKeys);
+        const cleanedKeys = keys.map(k => k.trim()).filter(k => k.length > 0);
+        const finalKeys = cleanedKeys.length > 0 ? cleanedKeys : [''];
+        setKeys(finalKeys);
 
-        // Slight delay to feel like "saving", then close
+        // Save to global context, which persists to DB & LocalStorage
+        saveApiKeys(finalKeys);
+
         setTimeout(() => {
             onClose();
         }, 300);
     };
 
     const handleClearAll = () => {
-        saveKeys([]);
+        saveApiKeys([]);
         setKeys(['']);
     };
 
@@ -99,7 +101,7 @@ export default function ApiKeySettings({ open, onClose }) {
                             <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <input
                                     type="password"
-                                    placeholder={`Gemini API Key ${index + 1}`}
+                                    placeholder={`Gemini API Key ${index + 1} `}
                                     value={k}
                                     onChange={(e) => updateKey(index, e.target.value)}
                                     style={{

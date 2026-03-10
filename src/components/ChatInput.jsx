@@ -80,8 +80,8 @@ export default function ChatInput({ onSend, disabled }) {
                         fontWeight: 600,
                         border: 'none',
                         cursor: disabled ? 'not-allowed' : 'pointer',
-                        background: mode === 'ask' ? 'var(--bg-card)' : 'transparent',
-                        color: mode === 'ask' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        background: mode === 'ask' ? 'var(--accent)' : 'transparent',
+                        color: mode === 'ask' ? 'white' : 'var(--text-secondary)',
                         boxShadow: mode === 'ask' ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
                         transition: 'all 0.2s',
                         display: 'flex', alignItems: 'center', gap: '6px'
@@ -89,8 +89,8 @@ export default function ChatInput({ onSend, disabled }) {
                 >
                     <div style={{
                         width: '8px', height: '8px', borderRadius: '50%',
-                        background: mode === 'ask' ? 'var(--text-secondary)' : 'transparent',
-                        border: `1px solid ${mode === 'ask' ? 'var(--text-secondary)' : 'var(--border)'}`
+                        background: mode === 'ask' ? 'rgba(255,255,255,0.7)' : 'transparent',
+                        border: `1px solid ${mode === 'ask' ? 'rgba(255,255,255,0.7)' : 'var(--border)'}`
                     }} />
                     翻译对方内容
                 </button>
@@ -105,7 +105,7 @@ export default function ChatInput({ onSend, disabled }) {
                         cursor: disabled ? 'not-allowed' : 'pointer',
                         background: mode === 'reply' ? 'var(--accent)' : 'transparent',
                         color: mode === 'reply' ? 'white' : 'var(--text-secondary)',
-                        boxShadow: mode === 'reply' ? '0 2px 10px var(--accent-glow)' : 'none',
+                        boxShadow: mode === 'reply' ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
                         transition: 'all 0.2s',
                         display: 'flex', alignItems: 'center', gap: '6px'
                     }}

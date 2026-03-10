@@ -218,7 +218,7 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                                                                 {reply.style === 'casual' ? '🎬 地道口语' : '📋 专业商务'}
                                                             </span>
                                                         </div>
-                                                        <p className="mono" style={{ fontSize: '13px', lineHeight: '1.5', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                                                        <p style={{ fontSize: '13px', lineHeight: '1.5', color: 'var(--text-primary)', marginBottom: '4px' }}>
                                                             "{reply.english}"
                                                         </p>
                                                         {reply.chinese_explanation && (

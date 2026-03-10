@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { MessageSquarePlus, MessageSquare, Film, ChevronLeft, ChevronRight, LogOut, Edit2, X, Save } from 'lucide-react';
+import { MessageSquarePlus, MessageSquare, Film, ChevronLeft, ChevronRight, LogOut, Edit2, Trash2, X, Save } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
 
 export default function Sidebar({ collapsed, onToggle }) {
-    const { conversations, activeConvId, setActiveConvId, createConversation, updateConversationMetadata } = useApp();
+    const { conversations, activeConvId, setActiveConvId, createConversation, updateConversationMetadata, deleteConversation } = useApp();
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [editConv, setEditConv] = useState(null);
     const [editTitle, setEditTitle] = useState('');
@@ -135,7 +135,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                                 position: 'relative'
                             }}
                             onClick={() => setActiveConvId(conv.id)}
-                            title={collapsed ? conv.title : ''}
+                            title={conv.note ? `[备注] ${conv.note}` : conv.title}
                         >
                             <MessageSquare
                                 size={14}
@@ -164,29 +164,43 @@ export default function Sidebar({ collapsed, onToggle }) {
                                 </div>
                             )}
 
-                            {/* Hover Edit Button (Visible when active) */}
+                            {/* Hover Buttons (Visible when active) */}
                             {!collapsed && activeConvId === conv.id && (
-                                <button
-                                    className="edit-conv-btn"
-                                    onClick={(e) => openEditModal(conv, e)}
-                                    style={{
-                                        position: 'absolute',
-                                        right: '8px',
-                                        top: '12px',
-                                        background: 'var(--bg-card)',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '4px',
-                                        padding: '4px',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: 'var(--text-secondary)'
-                                    }}
-                                    title="编辑备注"
-                                >
-                                    <Edit2 size={12} />
-                                </button>
+                                <div style={{
+                                    position: 'absolute',
+                                    right: '8px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    display: 'flex',
+                                    gap: '6px'
+                                }}>
+                                    <button
+                                        className="edit-conv-btn"
+                                        onClick={(e) => openEditModal(conv, e)}
+                                        style={{
+                                            background: 'var(--bg-card)', border: '1px solid var(--border)',
+                                            borderRadius: '4px', padding: '4px', cursor: 'pointer',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            color: 'var(--text-secondary)'
+                                        }}
+                                        title="编辑备注"
+                                    >
+                                        <Edit2 size={12} />
+                                    </button>
+                                    <button
+                                        className="edit-conv-btn"
+                                        onClick={(e) => deleteConversation(conv.id, e)}
+                                        style={{
+                                            background: 'var(--bg-card)', border: '1px solid var(--border)',
+                                            borderRadius: '4px', padding: '4px', cursor: 'pointer',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            color: '#f87171' // Red for delete
+                                        }}
+                                        title="删除对话"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                </div>
                             )}
                         </div>
                     ))}

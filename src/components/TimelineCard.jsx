@@ -42,26 +42,36 @@ function SaveButton({ english, chinese_explanation, style: btnStyle }) {
 }
 
 // Error card
-function ErrorCard({ message }) {
+function ErrorCard({ message, onRetry }) {
     const isApiKeyError = message === 'MISSING_API_KEY';
     return (
         <div className="glass-card" style={{
             padding: '14px 16px',
             borderColor: 'rgba(239,68,68,0.3)',
-            background: 'rgba(239,68,68,0.05)'
+            background: 'rgba(239,68,68,0.05)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
         }}>
-            <p style={{ fontSize: '13px', color: '#f87171', lineHeight: '1.6' }}>
+            <p style={{ fontSize: '13px', color: '#f87171', lineHeight: '1.6', margin: 0, flex: 1 }}>
                 {isApiKeyError ? (
-                    <>⚠️ 缺少 API Key。请在 <code>.env.local</code> 文件中配置 <code>VITE_GEMINI_API_KEY</code>，然后重启开发服务器。</>
+                    <>⚠️ 缺少 API Key。请点击左上角齿轮图标 ⚙️ 配置。配置好后可点击右侧重试。</>
                 ) : (
                     <>⚠️ 请求失败：{message}</>
                 )}
             </p>
+            {onRetry && (
+                <button
+                    onClick={onRetry}
+                    className="btn-ghost"
+                    style={{ padding: '6px 12px', fontSize: '12px', color: 'var(--text-primary)', border: '1px solid var(--border)', marginLeft: '12px' }}
+                >
+                    <RefreshCw size={12} style={{ marginRight: '4px' }} /> 重新生成
+                </button>
+            )}
         </div>
     );
 }
 
-export default function TimelineCard({ interaction, isLoading, onReply, onRegenerate }) {
+export default function TimelineCard({ interaction, isLoading, onReply, onRegenerate, onRetryError }) {
     const { userMsg, assistantMsg } = interaction;
 
     // Determine the type of interaction
@@ -153,7 +163,7 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                 {/* 3. Error State */}
                 {assistantMsg?.error && (
                     <div style={{ padding: '16px' }}>
-                        <ErrorCard message={assistantMsg.error} />
+                        <ErrorCard message={assistantMsg.error} onRetry={() => onRetryError && onRetryError(interaction)} />
                     </div>
                 )}
 
@@ -224,53 +234,101 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                                     </div>
                                 )}
 
-                                {/* Inline Contextual Reply Input */}
-                                <div style={{
-                                    background: 'var(--bg-hover)',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    border: '1px dashed var(--border-light)'
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                                        <Reply size={14} color="var(--accent)" />
-                                        <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 600 }}>我直接回复对方</span>
+                                {/* Nested Reply Section */}
+                                {assistantMsg.loading_reply || assistantMsg.user_reply_text ? (
+                                    <div style={{ marginTop: '16px', borderTop: '1px dashed var(--border-light)', paddingTop: '16px', animation: 'fadeIn 0.3s ease' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                                            <Reply size={14} color="var(--accent)" />
+                                            <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 600 }}>我回复</span>
+                                        </div>
+                                        <div style={{
+                                            padding: '12px', background: 'var(--bg-card)', borderRadius: '8px',
+                                            color: 'var(--text-primary)', fontSize: '14px', marginBottom: '16px',
+                                            border: '1px solid var(--border)'
+                                        }}>
+                                            {assistantMsg.user_reply_text}
+                                        </div>
+
+                                        {assistantMsg.loading_reply ? (
+                                            <TypingIndicator />
+                                        ) : assistantMsg.reply_error ? (
+                                            <ErrorCard
+                                                message={assistantMsg.reply_error}
+                                                onRetry={() => onReply(assistantMsg.user_reply_text, originalText, assistantMsg.id)}
+                                            />
+                                        ) : assistantMsg.reply_data ? (
+                                            <div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                                                    <Bot size={14} color="var(--warning)" />
+                                                    <span style={{ fontSize: '12px', color: 'var(--warning)', fontWeight: 600 }}>自动翻译为英文</span>
+                                                </div>
+                                                <div style={{
+                                                    background: 'var(--bg-primary)', borderRadius: '8px',
+                                                    padding: '12px 16px', borderLeft: '3px solid var(--warning)', marginBottom: '10px'
+                                                }}>
+                                                    <p className="mono" style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-primary)', fontWeight: 500 }}>
+                                                        "{assistantMsg.reply_data.optimized_english}"
+                                                    </p>
+                                                </div>
+                                                {assistantMsg.reply_data.chinese_explanation && (
+                                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '10px' }}>
+                                                        {assistantMsg.reply_data.chinese_explanation}
+                                                    </p>
+                                                )}
+                                                <SaveButton
+                                                    english={assistantMsg.reply_data.optimized_english}
+                                                    chinese_explanation={assistantMsg.reply_data.chinese_explanation}
+                                                    style="optimized"
+                                                />
+                                            </div>
+                                        ) : null}
                                     </div>
-                                    <textarea
-                                        value={replyText}
-                                        onChange={(e) => setReplyText(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && !e.shiftKey) {
-                                                e.preventDefault();
-                                                if (replyText.trim()) {
-                                                    onReply(replyText, originalText);
-                                                    setReplyText('');
-                                                }
-                                            }
-                                        }}
-                                        placeholder="用中文写下你的回复..."
-                                        style={{
-                                            width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)',
-                                            borderRadius: '6px', padding: '10px', color: 'var(--text-primary)',
-                                            fontSize: '13px', outline: 'none', resize: 'none', minHeight: '60px', marginBottom: '8px'
-                                        }}
-                                    />
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                        <button
-                                            onClick={() => {
-                                                if (replyText.trim()) {
-                                                    onReply(replyText, originalText);
-                                                    setReplyText('');
+                                ) : (
+                                    <div style={{
+                                        background: 'var(--bg-hover)', padding: '12px',
+                                        borderRadius: '8px', border: '1px dashed var(--border-light)'
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                                            <Reply size={14} color="var(--accent)" />
+                                            <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 600 }}>我直接回复对方</span>
+                                        </div>
+                                        <textarea
+                                            value={replyText}
+                                            onChange={(e) => setReplyText(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    if (replyText.trim()) {
+                                                        onReply(replyText, originalText, assistantMsg.id);
+                                                        setReplyText('');
+                                                    }
                                                 }
                                             }}
-                                            className="btn-primary"
-                                            disabled={!replyText.trim()}
-                                            style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                        >
-                                            <Send size={12} />
-                                            生成英文回复
-                                        </button>
+                                            placeholder="用中文写下你的回复..."
+                                            style={{
+                                                width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border)',
+                                                borderRadius: '6px', padding: '10px', color: 'var(--text-primary)',
+                                                fontSize: '13px', outline: 'none', resize: 'none', minHeight: '60px', marginBottom: '8px'
+                                            }}
+                                        />
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                            <button
+                                                onClick={() => {
+                                                    if (replyText.trim()) {
+                                                        onReply(replyText, originalText, assistantMsg.id);
+                                                        setReplyText('');
+                                                    }
+                                                }}
+                                                className="btn-primary"
+                                                disabled={!replyText.trim()}
+                                                style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                            >
+                                                <Send size={12} />
+                                                生成英文回复
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </>
                         )}
 

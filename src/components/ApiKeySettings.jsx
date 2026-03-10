@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Key, Save, Trash2, X } from 'lucide-react';
+import { Key, Save, Trash2, X, Plus, Minus } from 'lucide-react';
+import { getSavedKeys, saveKeys } from '../services/geminiService';
 
 export default function ApiKeySettings({ open, onClose }) {
-    const [customKey, setCustomKey] = useState('');
-    const [savedKey, setSavedKey] = useState('');
+    const [keys, setKeys] = useState(['']);
 
-    // Load saved key on mount
+    // Load saved keys on mount
     useEffect(() => {
         if (open) {
             setTimeout(() => {
-                const stored = localStorage.getItem('gemini_custom_api_key') || '';
-                setCustomKey(stored);
-                setSavedKey(stored);
+                const stored = getSavedKeys();
+                setKeys(stored.length > 0 ? stored : ['']);
             }, 0);
         }
     }, [open]);
@@ -19,8 +18,8 @@ export default function ApiKeySettings({ open, onClose }) {
     if (!open) return null;
 
     const handleSave = () => {
-        localStorage.setItem('gemini_custom_api_key', customKey.trim());
-        setSavedKey(customKey.trim());
+        const validKeys = keys.map(k => k.trim()).filter(Boolean);
+        saveKeys(validKeys);
 
         // Slight delay to feel like "saving", then close
         setTimeout(() => {
@@ -28,11 +27,27 @@ export default function ApiKeySettings({ open, onClose }) {
         }, 300);
     };
 
-    const handleClear = () => {
-        localStorage.removeItem('gemini_custom_api_key');
-        setCustomKey('');
-        setSavedKey('');
+    const handleClearAll = () => {
+        saveKeys([]);
+        setKeys(['']);
     };
+
+    const updateKey = (index, value) => {
+        const newKeys = [...keys];
+        newKeys[index] = value;
+        setKeys(newKeys);
+    };
+
+    const addKey = () => {
+        setKeys([...keys, '']);
+    };
+
+    const removeKey = (index) => {
+        const newKeys = keys.filter((_, i) => i !== index);
+        setKeys(newKeys.length > 0 ? newKeys : ['']);
+    };
+
+    const hasValidKeys = keys.some(k => k.trim().length > 0);
 
     return (
         <>
@@ -50,9 +65,10 @@ export default function ApiKeySettings({ open, onClose }) {
                 style={{
                     position: 'fixed', top: '50%', left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    width: '400px', maxWidth: '90vw',
+                    width: '420px', maxWidth: '90vw',
                     zIndex: 101, padding: '24px',
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+                    maxHeight: '80vh', display: 'flex', flexDirection: 'column'
                 }}
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -71,43 +87,63 @@ export default function ApiKeySettings({ open, onClose }) {
                     </button>
                 </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '12px' }}>
-                        系统预置了 3 个免费的 Gemini API Key。当预置 Key 的免费额度耗尽时，你可以输入自己的专属 Key 继续使用。
+                <div style={{ marginBottom: '20px', overflowY: 'auto', paddingRight: '4px' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--warning)', lineHeight: '1.5', marginBottom: '12px', padding: '8px', background: 'rgba(234,179,8,0.1)', borderRadius: '6px', border: '1px solid rgba(234,179,8,0.2)' }}>
+                        ⚠️ 系统不再提供默认 Key。请自行添加你的专属 Gemini API Keys。
+                        <br />
+                        支持配置多个 Key，如果某个 Key 额度耗尽或失效，系统会自动尝试切换下一个。
                     </p>
 
-                    <div style={{ position: 'relative' }}>
-                        <input
-                            type="password"
-                            placeholder="输入你的 Gemini API Key (选填)"
-                            value={customKey}
-                            onChange={(e) => setCustomKey(e.target.value)}
-                            style={{
-                                width: '100%',
-                                background: 'var(--bg-primary)',
-                                border: '1px solid var(--border)',
-                                borderRadius: '8px',
-                                padding: '10px 12px',
-                                color: 'var(--text-primary)',
-                                fontSize: '13px',
-                                outline: 'none',
-                                fontFamily: 'monospace'
-                            }}
-                        />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {keys.map((k, index) => (
+                            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <input
+                                    type="password"
+                                    placeholder={`Gemini API Key ${index + 1}`}
+                                    value={k}
+                                    onChange={(e) => updateKey(index, e.target.value)}
+                                    style={{
+                                        flex: 1,
+                                        background: 'var(--bg-primary)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '8px',
+                                        padding: '10px 12px',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '13px',
+                                        outline: 'none',
+                                        fontFamily: 'monospace'
+                                    }}
+                                />
+                                <button
+                                    onClick={() => removeKey(index)}
+                                    className="btn-ghost"
+                                    style={{ padding: '8px', color: '#f87171' }}
+                                    title="移除"
+                                >
+                                    <Minus size={14} />
+                                </button>
+                            </div>
+                        ))}
                     </div>
+
+                    <button
+                        onClick={addKey}
+                        className="btn-ghost"
+                        style={{ marginTop: '12px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', padding: '8px' }}
+                    >
+                        <Plus size={14} /> 增加一个 Key 备用
+                    </button>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {savedKey ? (
-                        <button
-                            onClick={handleClear}
-                            className="btn-ghost"
-                            style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f87171', borderColor: 'rgba(248,113,113,0.3)' }}
-                        >
-                            <Trash2 size={14} />
-                            清除专属 Key
-                        </button>
-                    ) : <div />}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                    <button
+                        onClick={handleClearAll}
+                        className="btn-ghost"
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f87171', borderColor: 'rgba(248,113,113,0.3)' }}
+                    >
+                        <Trash2 size={14} />
+                        清空全部
+                    </button>
 
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <button onClick={onClose} className="btn-ghost">
@@ -117,7 +153,7 @@ export default function ApiKeySettings({ open, onClose }) {
                             onClick={handleSave}
                             className="btn-primary"
                             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                            disabled={!customKey.trim() && !savedKey}
+                            disabled={!hasValidKeys}
                         >
                             <Save size={14} />
                             保存设置

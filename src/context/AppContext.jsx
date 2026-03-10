@@ -10,7 +10,7 @@ function generateId() {
 }
 
 function newConversation(title = '新对话') {
-    return { id: generateId(), title, messages: [], created_at: new Date().toISOString() };
+    return { id: generateId(), title, note: '', messages: [], created_at: new Date().toISOString() };
 }
 
 export function AppProvider({ children, user }) {
@@ -38,7 +38,8 @@ export function AppProvider({ children, user }) {
                 if (error) throw error;
 
                 if (convos && convos.length > 0) {
-                    setConversations(convos);
+                    // Ensure older convos have a note field locally
+                    setConversations(convos.map(c => ({ ...c, note: c.note || '' })));
                     setActiveConvId(convos[0].id);
                 } else {
                     // Create default conversation if none exists
@@ -49,6 +50,7 @@ export function AppProvider({ children, user }) {
                             id: initial.id,
                             user_id: user.id,
                             title: initial.title,
+                            note: initial.note,
                             messages: initial.messages
                         });
                     if (!insertError) {
@@ -81,6 +83,7 @@ export function AppProvider({ children, user }) {
                 .from('conversations')
                 .update({
                     title: convObject.title,
+                    note: convObject.note || '',
                     messages: convObject.messages,
                     updated_at: new Date().toISOString()
                 })
@@ -146,6 +149,19 @@ export function AppProvider({ children, user }) {
         });
     }, [syncConversationToDb]);
 
+    // Update conversation metadata
+    const updateConversationMetadata = useCallback((convId, { title, note }) => {
+        setConversations(prev => {
+            const newConvos = prev.map(c => {
+                if (c.id !== convId) return c;
+                const updatedConv = { ...c, title: title !== undefined ? title : c.title, note: note !== undefined ? note : c.note };
+                syncConversationToDb(updatedConv);
+                return updatedConv;
+            });
+            return newConvos;
+        });
+    }, [syncConversationToDb]);
+
     // Create new conversation
     const createConversation = useCallback(async () => {
         if (!user) return;
@@ -197,6 +213,7 @@ export function AppProvider({ children, user }) {
         addMessage,
         updateLastMessage,
         updateMessage,
+        updateConversationMetadata,
         createConversation,
         wordBook,
         wordBookOpen,

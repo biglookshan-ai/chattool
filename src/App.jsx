@@ -7,6 +7,7 @@ import TimelineCard, { TypingIndicator } from './components/TimelineCard';
 import ChatInput from './components/ChatInput';
 import WordBook from './components/WordBook';
 import ApiKeySettings from './components/ApiKeySettings';
+import SelectionToolbar from './components/SelectionToolbar';
 
 // Spin keyframe via inline style tag
 const spinStyle = document.createElement('style');
@@ -84,7 +85,7 @@ function WelcomeScreen() {
 
 export default function App() {
   const {
-    activeConversation, activeConvId, addMessage, updateLastMessage,
+    activeConversation, activeConvId, addMessage, updateLastMessage, updateMessage,
     wordBookOpen, setWordBookOpen, isLoading, setIsLoading
   } = useApp();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -121,28 +122,34 @@ export default function App() {
     }
   }, [isLoading, activeConvId, addMessage, updateLastMessage, setIsLoading]);
 
-  const handleSendReply = useCallback(async (chineseReply, englishContext) => {
+  const handleSendReply = useCallback(async (chineseReply, englishContext, baseAssistantMsgId) => {
     if (!chineseReply.trim() || isLoading) return;
 
-    const userMsgId = Date.now().toString();
-    const assistantMsgId = (Date.now() + 1).toString();
-
-    // Show the user's reply in the UI
-    addMessage({ id: userMsgId, role: 'user', content: `[REPLY] ${chineseReply}`, originalContext: englishContext });
-    addMessage({ id: assistantMsgId, role: 'assistant', content: '', data: null });
+    // Show the user's reply in the UI inline within the same card
+    updateMessage(activeConvId, baseAssistantMsgId, {
+      loading_reply: true,
+      user_reply_text: chineseReply,
+      reply_error: null
+    });
     setIsLoading(true);
 
     const promptText = `[REPLY_TO_CONTEXT]\nOriginal Message: "${englishContext}"\nMy Chinese Reply: "${chineseReply}"\n\nPlease translate my Chinese reply into professional Film Industry English.`;
 
     try {
       const result = await translateWithGemini(promptText);
-      updateLastMessage(activeConvId, { data: result, error: null });
+      updateMessage(activeConvId, baseAssistantMsgId, {
+        loading_reply: false,
+        reply_data: result
+      });
     } catch (err) {
-      updateLastMessage(activeConvId, { data: null, error: err.message || 'Unknown error' });
+      updateMessage(activeConvId, baseAssistantMsgId, {
+        loading_reply: false,
+        reply_error: err.message || 'Unknown error'
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, activeConvId, addMessage, updateLastMessage, setIsLoading]);
+  }, [isLoading, activeConvId, updateMessage, setIsLoading]);
 
   const handleRegenerate = useCallback(async (userMsg, assistantMsgId) => {
     if (isLoading) return;
@@ -282,6 +289,7 @@ export default function App() {
                   )}
                   onReply={handleSendReply}
                   onRegenerate={handleRegenerate}
+                  onRetryError={(interaction) => handleRegenerate(interaction.userMsg, interaction.assistantMsg?.id)}
                 />
               ))
             )}
@@ -294,6 +302,9 @@ export default function App() {
 
         {/* Word Book panel */}
         <WordBook />
+
+        {/* Global Selection Toolbar */}
+        <SelectionToolbar />
 
         {/* API Key Settings Modal */}
         <ApiKeySettings

@@ -1,24 +1,26 @@
-const DEFAULT_KEYS = [
-  'AIzaSyD_T3IJ-rNuNklXwaQG8y12-VWwv3LBOCM',
-  'AIzaSyBdGUbcMh2cOnTQIbR3Y7lNPSL1GRTKIZ4',
-  'AIzaSyBSLibDy1x_uH1rqxDqCDxXhlv7gcr-8ec'
-];
-
-// Read previously used default key index from localStorage
-function getDefaultKeyIndex() {
+// Read user API keys
+export function getSavedKeys() {
   try {
-    return parseInt(localStorage.getItem('gemini_default_key_index')) || 0;
+    const keys = JSON.parse(localStorage.getItem('gemini_api_keys'));
+    if (Array.isArray(keys) && keys.length > 0) return keys;
   } catch {
-    return 0;
+    // Ignore parse errors
   }
+
+  // Migration path: if an old single key exists, convert it to array
+  const oldKey = localStorage.getItem('gemini_custom_api_key');
+  if (oldKey) {
+    const keys = [oldKey];
+    localStorage.setItem('gemini_api_keys', JSON.stringify(keys));
+    localStorage.removeItem('gemini_custom_api_key');
+    return keys;
+  }
+
+  return [];
 }
 
-function setDefaultKeyIndex(index) {
-  try {
-    localStorage.setItem('gemini_default_key_index', index.toString());
-  } catch {
-    // Ignored
-  }
+export function saveKeys(keys) {
+  localStorage.setItem('gemini_api_keys', JSON.stringify(keys));
 }
 
 const SYSTEM_PROMPT = `You are a seasoned Rental House manager at a high-end film equipment rental company, with 15 years of experience on set as a 1st AC (First Assistant Camera). You know the industry inside and out — from lens prep and camera builds to gear lists, damage reports, and client negotiations. You speak the language of the crew.
@@ -93,20 +95,6 @@ export function isEnglishInput(text) {
   return chineseChars / totalChars < 0.2;
 }
 
-/**
- * Get active API key (Custom key prioritized over default pool)
- */
-function getActiveKeyData() {
-  const customKey = localStorage.getItem('gemini_custom_api_key');
-  if (customKey && customKey.trim()) {
-    return { key: customKey.trim(), isCustom: true, index: -1 };
-  }
-
-  // Use default pool
-  const idx = getDefaultKeyIndex() % DEFAULT_KEYS.length;
-  return { key: DEFAULT_KEYS[idx], isCustom: false, index: idx };
-}
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 /**
@@ -145,6 +133,11 @@ async function executeRequest(userMessage, apiKey) {
       throw new Error('QUOTA_EXCEEDED');
     }
 
+    // Check for invalid keys
+    if (errorMessage.includes("API key not valid") || errorMessage.includes("403") || errorMessage.includes("API_KEY_INVALID")) {
+      throw new Error('INVALID_KEY');
+    }
+
     if (errorMessage.includes("Failed to fetch") || String(error).includes("Failed to fetch")) {
       errorMessage = "Network Error: Failed to connect to Google's API. 请确认你的代理/VPN是否全局接管了浏览器的流量，或者API Key无效。";
     }
@@ -154,48 +147,40 @@ async function executeRequest(userMessage, apiKey) {
 }
 
 /**
- * Call Gemini API with auto-rotation logic for default keys
+ * Call Gemini API with auto-rotation logic across user keys
  * @param {string} userMessage
  * @returns {Promise<Object>}
  */
 export async function translateWithGemini(userMessage) {
-  const { key, isCustom, index } = getActiveKeyData();
-
-  try {
-    return await executeRequest(userMessage, key);
-  } catch (error) {
-    if (error.message === 'QUOTA_EXCEEDED') {
-      if (isCustom) {
-        throw new Error('CUSTOM_KEY_QUOTA_EXCEEDED');
-      } else {
-        // Try the NEXT default key
-        let nextIndex = (index + 1) % DEFAULT_KEYS.length;
-        setDefaultKeyIndex(nextIndex);
-
-        let attempts = 1; // already tried 1
-
-        // Keep trying the next keys in the pool
-        while (attempts < DEFAULT_KEYS.length) {
-          try {
-            console.log(`Key ${index} exhausted, trying key ${nextIndex}...`);
-            return await executeRequest(userMessage, DEFAULT_KEYS[nextIndex]);
-          } catch (nextError) {
-            if (nextError.message === 'QUOTA_EXCEEDED') {
-              attempts++;
-              nextIndex = (nextIndex + 1) % DEFAULT_KEYS.length;
-              setDefaultKeyIndex(nextIndex);
-            } else {
-              throw nextError;
-            }
-          }
-        }
-
-        // If we get here, all default keys are exhausted
-        throw new Error('ALL_DEFAULT_KEYS_EXHAUSTED');
-      }
-    }
-
-    // Re-throw any other errors
-    throw error;
+  const keys = getSavedKeys();
+  if (keys.length === 0) {
+    throw new Error('MISSING_API_KEY');
   }
+
+  let lastError = null;
+
+  for (let i = 0; i < keys.length; i++) {
+    try {
+      if (i > 0) console.log(`Key ${i - 1} exhausted/failed, trying next key...`);
+      return await executeRequest(userMessage, keys[i]);
+    } catch (error) {
+      lastError = error;
+      if (error.message === 'QUOTA_EXCEEDED' || error.message === 'INVALID_KEY') {
+        // Try next key
+        continue;
+      }
+      // Re-throw any other structural or network errors immediately
+      throw error;
+    }
+  }
+
+  // If we exhaust all keys
+  if (lastError && lastError.message === 'QUOTA_EXCEEDED') {
+    throw new Error('所有的 API Key 额度均已用尽，请添加新的 API Key。');
+  }
+  if (lastError && lastError.message === 'INVALID_KEY') {
+    throw new Error('你的 API Key 全部无效或错误，请重新检查设置。');
+  }
+
+  throw lastError || new Error('All provided keys failed.');
 }

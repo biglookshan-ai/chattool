@@ -6,6 +6,7 @@ CREATE TABLE public.conversations (
     id TEXT PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL,
     title TEXT NOT NULL,
+    note TEXT,
     messages JSONB DEFAULT '[]'::jsonb NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -91,3 +92,4 @@ create policy "Users can insert own settings"
 create policy "Users can update own settings"
   on public.user_settings for update
   using ( auth.uid() = user_id );
+ALTER TABLE public.conversations ADD COLUMN note TEXT;

@@ -105,7 +105,7 @@ export function AppProvider({ children, user }) {
         }
 
         fetchInitialData();
-    }, [user]);
+    }, [user?.id]);
 
     // Active conversation
     const activeConversation = conversations.find(c => c.id === activeConvId);

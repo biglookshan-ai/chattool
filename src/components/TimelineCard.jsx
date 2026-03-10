@@ -79,18 +79,21 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
     let originalText = userMsg?.content || '';
     let englishContext = null;
 
+    // Fallback for older messages before we explicitly added [REPLY] flag
+    // if the AI returned zh_to_en, it implies the user sent Chinese.
     if (originalText.startsWith('[REPLY] ')) {
         isReplyFlow = true;
         originalText = originalText.replace('[REPLY] ', '');
         englishContext = userMsg?.originalContext;
     } else if (assistantMsg?.data?.type === 'zh_to_en') {
-        // Fallback for older messages before we explicitly added [REPLY] flag
-        // if the AI returned zh_to_en, it implies the user sent Chinese.
         isReplyFlow = true;
     }
 
     // Local states
-    const [showReplies, setShowReplies] = useState(false);
+    // Auto-collapse previous phases if the user has ALREADY entered their reply.
+    const hasAlreadyReplied = assistantMsg?.user_reply_text ? true : false;
+    const [showReplies, setShowReplies] = useState(!hasAlreadyReplied);
+    const [showTranslation, setShowTranslation] = useState(!hasAlreadyReplied);
     const [replyText, setReplyText] = useState('');
 
     // Safety check - if somehow we don't have a user message (rare error state)
@@ -174,15 +177,29 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                         {/* A. Mode: Other Asks -> English to Chinese */}
                         {!isReplyFlow && assistantMsg.data.type === 'en_to_zh' && (
                             <>
-                                {/* Translation outcome */}
+                                {/* Translation outcome (Collapsible if replied) */}
                                 <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                                    <button
+                                        onClick={() => setShowTranslation(!showTranslation)}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px',
+                                            background: 'transparent', border: 'none', cursor: 'pointer', outline: 'none', padding: 0
+                                        }}
+                                    >
                                         <Bot size={14} color="var(--accent)" />
                                         <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>翻译</span>
-                                    </div>
-                                    <p style={{ fontSize: '15px', lineHeight: '1.7', color: 'var(--text-primary)' }}>
-                                        {assistantMsg.data.translation}
-                                    </p>
+                                        {hasAlreadyReplied && (
+                                            <span style={{ marginLeft: '4px', color: 'var(--text-muted)' }}>
+                                                {showTranslation ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    {showTranslation && (
+                                        <p style={{ fontSize: '15px', lineHeight: '1.7', color: 'var(--text-primary)', fontFamily: 'inherit' }}>
+                                            {assistantMsg.data.translation}
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Reference Replies (Collapsible) */}
@@ -266,8 +283,8 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                                                     background: 'var(--bg-primary)', borderRadius: '8px',
                                                     padding: '12px 16px', borderLeft: '3px solid var(--warning)', marginBottom: '10px'
                                                 }}>
-                                                    <p className="mono" style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-primary)', fontWeight: 500 }}>
-                                                        "{assistantMsg.reply_data.optimized_english}"
+                                                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text-primary)', fontWeight: 500, fontFamily: 'inherit', whiteSpace: 'pre-wrap' }}>
+                                                        {assistantMsg.reply_data.optimized_english}
                                                     </p>
                                                 </div>
                                                 {assistantMsg.reply_data.chinese_explanation && (

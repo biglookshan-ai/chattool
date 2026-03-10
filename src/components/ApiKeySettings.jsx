@@ -97,35 +97,48 @@ export default function ApiKeySettings({ open, onClose }) {
                     </p>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {keys.map((k, index) => (
-                            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <input
-                                    type="password"
-                                    placeholder={`Gemini API Key ${index + 1} `}
-                                    value={k}
-                                    onChange={(e) => updateKey(index, e.target.value)}
-                                    style={{
-                                        flex: 1,
-                                        background: 'var(--bg-primary)',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '8px',
-                                        padding: '10px 12px',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '13px',
-                                        outline: 'none',
-                                        fontFamily: 'monospace'
-                                    }}
-                                />
-                                <button
-                                    onClick={() => removeKey(index)}
-                                    className="btn-ghost"
-                                    style={{ padding: '8px', color: '#f87171' }}
-                                    title="移除"
-                                >
-                                    <Minus size={14} />
-                                </button>
-                            </div>
-                        ))}
+                        {keys.map((k, index) => {
+                            const isPlaceholderKey = k.length > 10;
+                            const displayValue = isPlaceholderKey
+                                ? `••••••••••••••••••••${k.slice(-4)}`
+                                : k;
+
+                            return (
+                                <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <input
+                                        type="text"
+                                        placeholder={`Gemini API Key ${index + 1}`}
+                                        value={displayValue}
+                                        onFocus={(e) => {
+                                            if (isPlaceholderKey) e.target.value = k;
+                                        }}
+                                        onBlur={(e) => {
+                                            if (isPlaceholderKey) e.target.value = displayValue;
+                                        }}
+                                        onChange={(e) => updateKey(index, e.target.value)}
+                                        style={{
+                                            flex: 1,
+                                            background: 'var(--bg-primary)',
+                                            border: '1px solid var(--border)',
+                                            borderRadius: '8px',
+                                            padding: '10px 12px',
+                                            color: 'var(--text-primary)',
+                                            fontSize: '13px',
+                                            outline: 'none',
+                                            fontFamily: 'monospace'
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => removeKey(index)}
+                                        className="btn-ghost"
+                                        style={{ padding: '8px', color: '#f87171' }}
+                                        title="移除"
+                                    >
+                                        <Minus size={14} />
+                                    </button>
+                                </div>
+                            );
+                        })}
                     </div>
 
                     <button

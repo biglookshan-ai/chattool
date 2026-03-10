@@ -29,9 +29,20 @@ export default function WordBook() {
     };
 
     const handleTTS = (text) => {
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'en-US';
-        window.speechSynthesis.speak(u);
+        if (!text) return;
+        const msg = new SpeechSynthesisUtterance(text);
+
+        // Attempt to find a British English voice
+        const voices = window.speechSynthesis.getVoices();
+        const ukVoice = voices.find(v => v.lang === 'en-GB' || v.lang === 'en_GB');
+        if (ukVoice) {
+            msg.voice = ukVoice;
+        } else {
+            // Fallback to general english if no UK voice specifically found
+            msg.lang = 'en-US';
+        }
+
+        window.speechSynthesis.speak(msg);
     };
 
     const filtered = wordBook.filter(w =>

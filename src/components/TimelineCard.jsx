@@ -92,8 +92,8 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
     // Local states
     // Auto-collapse previous phases if the user has ALREADY entered their reply.
     const hasAlreadyReplied = assistantMsg?.user_reply_text ? true : false;
-    const [showReplies, setShowReplies] = useState(!hasAlreadyReplied);
-    const [showTranslation, setShowTranslation] = useState(!hasAlreadyReplied);
+    const [showFullExchange, setShowFullExchange] = useState(!hasAlreadyReplied);
+    const [showReplies, setShowReplies] = useState(false);
     const [replyText, setReplyText] = useState('');
 
     // Safety check - if somehow we don't have a user message (rare error state)
@@ -177,133 +177,139 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                         {/* A. Mode: Other Asks -> English to Chinese */}
                         {!isReplyFlow && assistantMsg.data.type === 'en_to_zh' && (
                             <>
-                                {/* Translation outcome (Collapsible if replied) */}
-                                <div>
-                                    <button
-                                        onClick={() => setShowTranslation(!showTranslation)}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px',
-                                            background: 'transparent', border: 'none', cursor: 'pointer', outline: 'none', padding: 0
-                                        }}
-                                    >
-                                        <Bot size={14} color="var(--accent)" />
-                                        <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>翻译</span>
-                                        {hasAlreadyReplied && (
-                                            <span style={{ marginLeft: '4px', color: 'var(--text-muted)' }}>
-                                                {showTranslation ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                                            </span>
-                                        )}
-                                    </button>
+                                {/* Collapsible Middle Section (Translation, References, User's raw reply) */}
+                                {showFullExchange && (
+                                    <div className="animate-fade-in-up" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                        {/* Translation outcome */}
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                                                <Bot size={14} color="var(--accent)" />
+                                                <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>翻译</span>
+                                            </div>
+                                            <p style={{ fontSize: '15px', lineHeight: '1.7', color: 'var(--text-primary)', fontFamily: 'inherit' }}>
+                                                {assistantMsg.data.translation}
+                                            </p>
+                                        </div>
 
-                                    {showTranslation && (
-                                        <p style={{ fontSize: '15px', lineHeight: '1.7', color: 'var(--text-primary)', fontFamily: 'inherit' }}>
-                                            {assistantMsg.data.translation}
-                                        </p>
-                                    )}
-                                </div>
+                                        {/* Reference Replies (Collapsible within) */}
+                                        {assistantMsg.data.replies && assistantMsg.data.replies.length > 0 && (
+                                            <div style={{
+                                                background: 'var(--bg-primary)',
+                                                borderRadius: '8px',
+                                                border: '1px solid var(--border)',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <button
+                                                    onClick={() => setShowReplies(!showReplies)}
+                                                    style={{
+                                                        width: '100%', padding: '10px 14px',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                        background: 'transparent', border: 'none',
+                                                        color: 'var(--text-secondary)', fontSize: '12px',
+                                                        cursor: 'pointer', outline: 'none'
+                                                    }}
+                                                >
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        💬 参考回复 ({assistantMsg.data.replies.length})
+                                                    </span>
+                                                    {showReplies ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                                </button>
 
-                                {/* Reference Replies (Collapsible) */}
-                                {assistantMsg.data.replies && assistantMsg.data.replies.length > 0 && (
-                                    <div style={{
-                                        background: 'var(--bg-primary)',
-                                        borderRadius: '8px',
-                                        border: '1px solid var(--border)',
-                                        overflow: 'hidden'
-                                    }}>
-                                        <button
-                                            onClick={() => setShowReplies(!showReplies)}
-                                            style={{
-                                                width: '100%', padding: '10px 14px',
-                                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                                background: 'transparent', border: 'none',
-                                                color: 'var(--text-secondary)', fontSize: '12px',
-                                                cursor: 'pointer', outline: 'none'
-                                            }}
-                                        >
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                💬 参考回复 ({assistantMsg.data.replies.length})
-                                            </span>
-                                            {showReplies ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                                        </button>
-
-                                        {showReplies && (
-                                            <div style={{ padding: '12px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                                {assistantMsg.data.replies.map((reply, i) => (
-                                                    <div key={i}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                                                            <span className={`tag ${reply.style === 'casual' ? 'tag-casual' : 'tag-professional'}`}>
-                                                                {reply.style === 'casual' ? '🎬 地道口语' : '📋 专业商务'}
-                                                            </span>
-                                                        </div>
-                                                        <p style={{ fontSize: '13px', lineHeight: '1.5', color: 'var(--text-primary)', marginBottom: '4px' }}>
-                                                            "{reply.english}"
-                                                        </p>
-                                                        {reply.chinese_explanation && (
-                                                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '6px' }}>
-                                                                {reply.chinese_explanation}
-                                                            </p>
-                                                        )}
-                                                        <SaveButton english={reply.english} chinese_explanation={reply.chinese_explanation} style={reply.style} />
+                                                {showReplies && (
+                                                    <div style={{ padding: '12px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                        {assistantMsg.data.replies.map((reply, i) => (
+                                                            <div key={i}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                                                    <span className={`tag ${reply.style === 'casual' ? 'tag-casual' : 'tag-professional'}`}>
+                                                                        {reply.style === 'casual' ? '🎬 地道口语' : '📋 专业商务'}
+                                                                    </span>
+                                                                </div>
+                                                                <p style={{ fontSize: '13px', lineHeight: '1.5', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                                                                    "{reply.english}"
+                                                                </p>
+                                                                {reply.chinese_explanation && (
+                                                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '6px' }}>
+                                                                        {reply.chinese_explanation}
+                                                                    </p>
+                                                                )}
+                                                                <SaveButton english={reply.english} chinese_explanation={reply.chinese_explanation} style={reply.style} />
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                ))}
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Nested Reply Section (User's Chinese) */}
+                                        {(assistantMsg.loading_reply || assistantMsg.user_reply_text) && (
+                                            <div style={{ borderTop: '1px dashed var(--border-light)', paddingTop: '16px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                                                    <Reply size={14} color="var(--accent)" />
+                                                    <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 600 }}>我回复</span>
+                                                </div>
+                                                <div style={{
+                                                    padding: '12px', background: 'var(--bg-card)', borderRadius: '8px',
+                                                    color: 'var(--text-primary)', fontSize: '14px',
+                                                    border: '1px solid var(--border)'
+                                                }}>
+                                                    {assistantMsg.user_reply_text}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
-                                {/* Nested Reply Section */}
-                                {assistantMsg.loading_reply || assistantMsg.user_reply_text ? (
-                                    <div style={{ marginTop: '16px', borderTop: '1px dashed var(--border-light)', paddingTop: '16px', animation: 'fadeIn 0.3s ease' }}>
+                                {/* Collapse Toggle Button (Only after they have replied) */}
+                                {hasAlreadyReplied && (
+                                    <button
+                                        onClick={() => setShowFullExchange(!showFullExchange)}
+                                        className="btn-ghost animate-fade-in-up"
+                                        style={{
+                                            width: '100%', padding: '8px', fontSize: '12px',
+                                            color: 'var(--text-muted)', display: 'flex',
+                                            justifyContent: 'center', alignItems: 'center', gap: '4px',
+                                            background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '6px',
+                                            marginTop: showFullExchange ? '8px' : '0'
+                                        }}
+                                    >
+                                        {showFullExchange ? <><ChevronUp size={14} /> 收起交互过程</> : <><ChevronDown size={14} /> 展开中间翻译与解析过程</>}
+                                    </button>
+                                )}
+
+                                {/* Bottom Block (Either Input Box OR Target English) */}
+                                {assistantMsg.loading_reply ? (
+                                    <div style={{ marginTop: '16px' }}><TypingIndicator /></div>
+                                ) : assistantMsg.reply_error ? (
+                                    <div style={{ marginTop: '16px' }}><ErrorCard message={assistantMsg.reply_error} onRetry={() => onReply(assistantMsg.user_reply_text, originalText, assistantMsg.id)} /></div>
+                                ) : assistantMsg.reply_data ? (
+                                    <div className="animate-fade-in-up" style={{ marginTop: showFullExchange ? '16px' : '8px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                                            <Reply size={14} color="var(--accent)" />
-                                            <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 600 }}>我回复</span>
+                                            <Bot size={14} color="var(--warning)" />
+                                            <span style={{ fontSize: '12px', color: 'var(--warning)', fontWeight: 600 }}>自动翻译为英文</span>
                                         </div>
                                         <div style={{
-                                            padding: '12px', background: 'var(--bg-card)', borderRadius: '8px',
-                                            color: 'var(--text-primary)', fontSize: '14px', marginBottom: '16px',
-                                            border: '1px solid var(--border)'
+                                            background: 'var(--bg-primary)', borderRadius: '8px',
+                                            padding: '12px 16px', borderLeft: '3px solid var(--warning)', marginBottom: '10px'
                                         }}>
-                                            {assistantMsg.user_reply_text}
+                                            <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text-primary)', fontWeight: 500, fontFamily: 'inherit', whiteSpace: 'pre-wrap' }}>
+                                                {assistantMsg.reply_data.optimized_english}
+                                            </p>
                                         </div>
-
-                                        {assistantMsg.loading_reply ? (
-                                            <TypingIndicator />
-                                        ) : assistantMsg.reply_error ? (
-                                            <ErrorCard
-                                                message={assistantMsg.reply_error}
-                                                onRetry={() => onReply(assistantMsg.user_reply_text, originalText, assistantMsg.id)}
-                                            />
-                                        ) : assistantMsg.reply_data ? (
-                                            <div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                                                    <Bot size={14} color="var(--warning)" />
-                                                    <span style={{ fontSize: '12px', color: 'var(--warning)', fontWeight: 600 }}>自动翻译为英文</span>
-                                                </div>
-                                                <div style={{
-                                                    background: 'var(--bg-primary)', borderRadius: '8px',
-                                                    padding: '12px 16px', borderLeft: '3px solid var(--warning)', marginBottom: '10px'
-                                                }}>
-                                                    <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--text-primary)', fontWeight: 500, fontFamily: 'inherit', whiteSpace: 'pre-wrap' }}>
-                                                        {assistantMsg.reply_data.optimized_english}
-                                                    </p>
-                                                </div>
-                                                {assistantMsg.reply_data.chinese_explanation && (
-                                                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '10px' }}>
-                                                        {assistantMsg.reply_data.chinese_explanation}
-                                                    </p>
-                                                )}
-                                                <SaveButton
-                                                    english={assistantMsg.reply_data.optimized_english}
-                                                    chinese_explanation={assistantMsg.reply_data.chinese_explanation}
-                                                    style="optimized"
-                                                />
-                                            </div>
-                                        ) : null}
+                                        {showFullExchange && assistantMsg.reply_data.chinese_explanation && (
+                                            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '10px' }}>
+                                                {assistantMsg.reply_data.chinese_explanation}
+                                            </p>
+                                        )}
+                                        <SaveButton
+                                            english={assistantMsg.reply_data.optimized_english}
+                                            chinese_explanation={assistantMsg.reply_data.chinese_explanation}
+                                            style="optimized"
+                                        />
                                     </div>
-                                ) : (
-                                    <div style={{
+                                ) : !assistantMsg.user_reply_text ? (
+                                    <div className="animate-fade-in-up" style={{
                                         background: 'var(--bg-hover)', padding: '12px',
-                                        borderRadius: '8px', border: '1px dashed var(--border-light)'
+                                        borderRadius: '8px', border: '1px dashed var(--border-light)', marginTop: '0'
                                     }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                                             <Reply size={14} color="var(--accent)" />
@@ -345,7 +351,7 @@ export default function TimelineCard({ interaction, isLoading, onReply, onRegene
                                             </button>
                                         </div>
                                     </div>
-                                )}
+                                ) : null}
                             </>
                         )}
 

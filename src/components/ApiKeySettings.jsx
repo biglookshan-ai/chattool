@@ -65,12 +65,15 @@ export default function ApiKeySettings({ open, onClose }) {
             <div
                 className="glass-card animate-fade-in-up"
                 style={{
-                    position: 'fixed', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
+                    position: 'fixed',
+                    top: '5vh',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
                     width: '420px', maxWidth: '90vw',
                     zIndex: 101, padding: '24px',
                     boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
-                    maxHeight: '80vh', display: 'flex', flexDirection: 'column'
+                    maxHeight: '90vh',
+                    display: 'flex', flexDirection: 'column'
                 }}
             >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>

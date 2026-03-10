@@ -279,7 +279,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                         }}
                     />
                     <div
-                        className="glass-card animate-fade-in-up"
+                        className="glass-card animate-fade-in"
                         style={{
                             position: 'fixed', top: '50%', left: '50%',
                             transform: 'translate(-50%, -50%)',
